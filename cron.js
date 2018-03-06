@@ -1,4 +1,5 @@
 const firebase_admin = require('firebase-admin');
+const request = require('request-promise');
 const serviceAccount = require('./ikaassistant-auth-key.json');
 
 firebase_admin.initializeApp({
@@ -13,6 +14,15 @@ cron.schedule('* * * * * *', () => {
   //prepare HTTP request
   const iksm_session = process.env.IKSM_SESSION;
   console.log(iksm_session);
+
+  const cookie = "iksm_session=" + iksm_session;
+  const url = "https://app.splatoon2.nintendo.net/api/schedules";
+  const header = {
+    url: url,
+    Cookie: cookie,
+    method: "GET"
+  };
+
   //
   //send request
   //
