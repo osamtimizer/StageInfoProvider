@@ -1,4 +1,4 @@
-const firebase_admin = require('firebase_admin');
+const firebase_admin = require('firebase-admin');
 const serviceAccount = require('./ikaassistant-auth-key.json');
 
 firebase_admin.initializeApp({
@@ -11,6 +11,8 @@ let cron = require('node-cron');
 cron.schedule('* * * * * *', () => {
   console.log("hello nodejs");
   //prepare HTTP request
+  const iksm_session = process.env.IKSM_SESSION;
+  console.log(iksm_session);
   //
   //send request
   //
