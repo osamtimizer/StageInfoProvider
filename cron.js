@@ -36,18 +36,33 @@ cron.schedule('* * * * * *', () => {
   };
 
   //send request
-  request(options).then((result) => {
+  request(options).then((response) => {
     console.log("json obj has been fetched correctly.");
+
     //parse json from server
-    //
+
+    //response is string obj, so this must be parsed.
+    const stages_parsed = JSON.parse(response).result;
+    const regular_parsed = stages_parsed.regular;
+    const gachi_parsed= stages_parsed.gachi;
+    const league_parsed = stages_parsed.league;
+
+    console.log(regular_parsed);
+    console.log(gachi_parsed);
+    console.log(league_parsed);
+
     //refresh stage info on firebase realtimedb
     const db = firebase_admin.database();
-    const ref = db.ref('stages').push();
+    const ref = db.ref('stages');
     //check whether the latest info is already pushed.
+
+
     //TODO: compare info between json and db.
     if (true) {
-      ref.set({
-        rule: "gachi"
+      /*
+      const ref_push = ref.push();
+      ref_push.set({
+        rule: "gachi",
         stage_name: "TEST",
         start_time: "21:00",
         date: "0307"
@@ -55,10 +70,12 @@ cron.schedule('* * * * * *', () => {
         if (err) {
           console.error("Error: ", err);
         } else {
-          console.log("success");
+          console.log("Log:DB push success");
         }
       });
+      */
     } else {
+      console.log("Log:Info on DB is up-to-date");
       //nothing to do.
     }
   }).catch((err) => {
