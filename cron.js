@@ -1,5 +1,7 @@
 const firebase_admin = require('firebase-admin');
 const request = require('request-promise');
+const jq = require('node-jq');
+const fs = require('fs');
 const serviceAccount = require('./ikaassistant-auth-key.json');
 
 firebase_admin.initializeApp({
@@ -28,7 +30,7 @@ cron.schedule('* * * * * *', () => {
   //send request
   request(options).then((result) => {
     console.log("json obj fetched");
-    console.log(ISON.parse(result));
+    fs.writeFile("result.json", result);
   }).catch((err) => {
     console.error("Error: ", err);
     return false;
