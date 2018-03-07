@@ -16,13 +16,20 @@ cron.schedule('* * * * * *', () => {
   const iksm_session = process.env.IKSM_SESSION;
 
   const cookie = "iksm_session=" + iksm_session;
+  const ua = "StageInfoProvider/0.1 (twitter @osamtimizer)";
+
+  //This url should be changed to other unofficial API server because the Cookie will be expired within 48 hours on official API server.
   const url = "https://app.splatoon2.nintendo.net/api/schedules";
+  const url_unofficial = "https://spla2.yuu26.com/schedule";
+
+  //Cookie(iksm_session) is not required for unofficial API server.
+  //User-Agent should be set instead.
   const headers = {
-    Cookie: cookie,
+    "User-Agent": ua
   };
 
   const options = {
-    url: url,
+    url: url_unofficial,
     method: "GET",
     headers: headers
   };
