@@ -10,7 +10,7 @@ firebase_admin.initializeApp({
 });
 
 let cron = require('node-cron');
-//this task must be executed every 2 hours.
+//this task must be executed minimum every 2 hours.
 cron.schedule('*/5 * * * * *', () => {
   //prepare HTTP request
   const iksm_session = process.env.IKSM_SESSION;
