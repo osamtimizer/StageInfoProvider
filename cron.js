@@ -11,7 +11,7 @@ firebase_admin.initializeApp({
 
 let cron = require('node-cron');
 //this task must be executed every 2 hours.
-cron.schedule('* * * * * *', () => {
+cron.schedule('*/5 * * * * *', () => {
   //prepare HTTP request
   const iksm_session = process.env.IKSM_SESSION;
 
@@ -37,7 +37,6 @@ cron.schedule('* * * * * *', () => {
 
   //send request
   request(options).then((response) => {
-    console.log("json obj has been fetched correctly.");
 
     //parse json from server
 
@@ -47,40 +46,75 @@ cron.schedule('* * * * * *', () => {
     const gachi_parsed= stages_parsed.gachi;
     const league_parsed = stages_parsed.league;
 
+    /*
     console.log(regular_parsed);
     console.log(gachi_parsed);
     console.log(league_parsed);
+    */
 
     //refresh stage info on firebase realtimedb
     const db = firebase_admin.database();
     const ref = db.ref('stages');
     //check whether the latest info is already pushed.
 
+    let latest_date_t = 0;
 
-    //TODO: compare info between json and db.
-    if (true) {
-      /*
-      const ref_push = ref.push();
-      ref_push.set({
-        rule: "gachi",
-        stage_name: "TEST",
-        start_time: "21:00",
-        date: "0307"
-      }, (err) => {
-        if (err) {
-          console.error("Error: ", err);
+    regular_parsed.forEach((item) => {
+      //item.start_t is a mSec for Date obj
+      if (latest_date_t < item.start_t) {
+        latest_date_t = item.start_t;
+      }
+    });
+
+    console.log(latest_date_t);
+    const regular_ref = ref.child("regular/stage");
+
+    //compare info between json and db.
+    regular_ref.once("value").then((snapshot) => {
+      let toBeRefreshed = false;
+      snapshot.forEach((childSnapshot) => {
+        if (latest_date_t > childSnapshot.child("start_t").val()) {
+          console.log("Start sync");
+          toBeRefreshed = true;
         } else {
-          console.log("Log:DB push success");
+          toBeRefreshed = false;
         }
       });
-      */
-    } else {
-      console.log("Log:Info on DB is up-to-date");
-      //nothing to do.
-    }
-  }).catch((err) => {
-    console.error("Error: ", err);
-    return false;
-  });
+      return toBeRefreshed;
+    }).then((toBeRefreshed) => {
+      console.log("toBeRefreshed:", toBeRefreshed);
+      if (toBeRefreshed) {
+        //remove all stage info from DB
+        ref.remove();
+        pushAllItems(regular_parsed, "regular");
+        pushAllItems(gachi_parsed, "gachi");
+        pushAllItems(league_parsed, "league");
 
+      } else {
+        console.log("Log:Info on DB is up-to-date");
+        //nothing to do.
+      }
+    }).catch((err) => {
+      console.error("Error: ", err);
+      return false;
+    });
+  });
 });
+
+let pushAllItems = (stages_json, rule) => {
+  //TODO: json obj has to be validated.
+  const db = firebase_admin.database();
+  const ref = db.ref('stages/' + rule + '/stage/');
+  stages_json.forEach((item) => {
+    ref.push({
+      rule: item.rule,
+      rule_type: item.rule_ex.name,
+      stage_A:item.maps[0],
+      stage_B:item.maps[1],
+      start_t: item.start_t,
+      start: item.start
+    }).catch((err) => {
+      console.error("Error: ", err);
+    });
+  });
+}
