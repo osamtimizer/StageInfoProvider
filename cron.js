@@ -72,6 +72,13 @@ cron.schedule('*/5 * * * * *', () => {
     //compare info between json and db.
     regular_ref.once("value").then((snapshot) => {
       let toBeRefreshed = false;
+      console.log("num of Child:", snapshot.numChildren());
+      if (snapshot.numChildren() ===0) {
+        console.log("empty database");
+        toBeRefreshed = true;
+        return toBeRefreshed;
+      }
+
       snapshot.forEach((childSnapshot) => {
         if (latest_date_t > childSnapshot.child("start_t").val()) {
           console.log("Start sync");
@@ -86,9 +93,15 @@ cron.schedule('*/5 * * * * *', () => {
       if (toBeRefreshed) {
         //remove all stage info from DB
         ref.remove();
-        pushAllItems(regular_parsed, "regular");
-        pushAllItems(gachi_parsed, "gachi");
-        pushAllItems(league_parsed, "league");
+        try {
+          pushAllItems(regular_parsed, "regular");
+          pushAllItems(gachi_parsed, "gachi");
+          pushAllItems(league_parsed, "league");
+        }
+        catch (err) {
+          console.error(err);
+          throw err;
+        }
 
       } else {
         console.log("Log:Info on DB is up-to-date");
@@ -103,6 +116,8 @@ cron.schedule('*/5 * * * * *', () => {
 
 let pushAllItems = (stages_json, rule) => {
   //TODO: json obj has to be validated.
+
+
   const db = firebase_admin.database();
   const ref = db.ref('stages/' + rule + '/stage/');
   stages_json.forEach((item) => {
