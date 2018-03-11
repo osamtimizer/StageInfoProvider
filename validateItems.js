@@ -7,7 +7,7 @@ let validateItems = (stages_json) => {
     }
   });
   if (!isValid) {
-    throw new ArgumentException();
+    return false;
   }
 }
 
