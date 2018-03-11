@@ -37,7 +37,7 @@ cron.schedule('*/5 * * * * *', () => {
 
   //send request
   request(options).then((response) => {
-
+    fs.writeFileSync("result_unofficial.json", response);
     //parse json from server
 
     //response is string obj, so this must be parsed.
