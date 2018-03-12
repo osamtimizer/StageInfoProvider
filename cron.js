@@ -13,7 +13,8 @@ firebase_admin.initializeApp({
 
 let cron = require('node-cron');
 //this task must be executed minimum every 2 hours.
-cron.schedule('*/5 * * * * *', () => {
+//Stage info will be refreshed every odd time.
+cron.schedule('1 1-23/2 * * * *', () => {
   //prepare HTTP request
   const user_agent = "StageInfoProvider/0.1 (twitter @osamtimizer)";
 
