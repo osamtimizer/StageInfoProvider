@@ -2,6 +2,8 @@ const firebase_admin = require('firebase-admin');
 const request = require('request-promise');
 const jq = require('node-jq');
 const fs = require('fs');
+const validator = require('./validateItems');
+
 const serviceAccount = require('./ikaassistant-auth-key.json');
 
 firebase_admin.initializeApp({
@@ -13,13 +15,9 @@ let cron = require('node-cron');
 //this task must be executed minimum every 2 hours.
 cron.schedule('*/5 * * * * *', () => {
   //prepare HTTP request
-  const iksm_session = process.env.IKSM_SESSION;
-
-  const cookie = "iksm_session=" + iksm_session;
   const user_agent = "StageInfoProvider/0.1 (twitter @osamtimizer)";
 
   //This url should be changed to other unofficial API server because the Cookie will be expired within 48 hours on official API server.
-  const url = "https://app.splatoon2.nintendo.net/api/schedules";
   const url_unofficial_schedule_battle = "https://spla2.yuu26.com/schedule";
   const url_unofficial_schedule_albeit = "https://spla2.yuu26.com/coop/schedule";
 
@@ -37,20 +35,21 @@ cron.schedule('*/5 * * * * *', () => {
 
   //send request
   request(options).then((response) => {
-    fs.writeFileSync("result_unofficial.json", response);
+    //fs.writeFileSync("result_unofficial.json", response);
     //parse json from server
 
     //response is string obj, so this must be parsed.
     const stages_parsed = JSON.parse(response).result;
+
     const regular_parsed = stages_parsed.regular;
     const gachi_parsed= stages_parsed.gachi;
     const league_parsed = stages_parsed.league;
 
-    /*
-    console.log(regular_parsed);
-    console.log(gachi_parsed);
-    console.log(league_parsed);
-    */
+    if (!validator.validateItems(regular_parsed) ||
+        !validator.validateItems(gachi_parsed) ||
+        !validator.validateItems(league_parsed)) {
+          throw new ArgumentException("fetched json is invalid");
+    }
 
     //refresh stage info on firebase realtimedb
     const db = firebase_admin.database();
@@ -66,14 +65,13 @@ cron.schedule('*/5 * * * * *', () => {
       }
     });
 
-    console.log(latest_date_t);
     const regular_ref = ref.child("regular/stage");
 
     //compare info between json and db.
     regular_ref.once("value").then((snapshot) => {
       let toBeRefreshed = false;
       console.log("num of Child:", snapshot.numChildren());
-      if (snapshot.numChildren() ===0) {
+      if (snapshot.numChildren() === 0) {
         console.log("empty database");
         toBeRefreshed = true;
         return toBeRefreshed;
@@ -81,17 +79,17 @@ cron.schedule('*/5 * * * * *', () => {
 
       snapshot.forEach((childSnapshot) => {
         if (latest_date_t > childSnapshot.child("start_t").val()) {
-          console.log("Start sync");
           toBeRefreshed = true;
         } else {
           toBeRefreshed = false;
+          return true;
         }
       });
       return toBeRefreshed;
     }).then((toBeRefreshed) => {
       console.log("toBeRefreshed:", toBeRefreshed);
       if (toBeRefreshed) {
-        //remove all stage info from DB
+        //The simplest way is to remove all stage info from DB
         ref.remove();
         try {
           pushAllItems(regular_parsed, "regular");
@@ -111,12 +109,12 @@ cron.schedule('*/5 * * * * *', () => {
       console.error("Error: ", err);
       return false;
     });
+  }).catch((err) => {
+    console.error("Error: ", err);
   });
 });
 
 let pushAllItems = (stages_json, rule) => {
-  //TODO: json obj has to be validated.
-
 
   const db = firebase_admin.database();
   const ref = db.ref('stages/' + rule + '/stage/');
