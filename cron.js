@@ -41,12 +41,12 @@ cron.schedule('1 1-23/2 * * * *', () => {
 
     //response is string obj, so this must be parsed.
     //TODO:validations should be summarized to validateItems.js
-    const response = JSON.parse(response);
-    if (!response.hasOwnProperty('result')) {
+    const response_parsed = JSON.parse(response);
+    if (!response_parsed.hasOwnProperty('result')) {
       throw new ArgumentException("fetched json is invalid");
     }
 
-    const stages = response.result;
+    const stages = response_parsed.result;
     if (!stages.hasOwnProperty('regular') ||
         !stages.hasOwnProperty('gachi') ||
         !stages.hasOwnProperty('league')) {
@@ -76,6 +76,7 @@ cron.schedule('1 1-23/2 * * * *', () => {
         latest_date_t = item.start_t;
       }
     });
+    console.log(latest_date_t);
 
     const regular_ref = ref.child("regular/stage");
 
