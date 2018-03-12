@@ -40,15 +40,26 @@ cron.schedule('1 1-23/2 * * * *', () => {
     //parse json from server
 
     //response is string obj, so this must be parsed.
-    const stages_parsed = JSON.parse(response).result;
+    //TODO:validations should be summarized to validateItems.js
+    const response = JSON.parse(response);
+    if (!response.hasOwnProperty('result')) {
+      throw new ArgumentException("fetched json is invalid");
+    }
 
-    const regular_parsed = stages_parsed.regular;
-    const gachi_parsed= stages_parsed.gachi;
-    const league_parsed = stages_parsed.league;
+    const stages = response.result;
+    if (!stages.hasOwnProperty('regular') ||
+        !stages.hasOwnProperty('gachi') ||
+        !stages.hasOwnProperty('league')) {
+          throw new ArgumentException("fetched json is invalid");
+    }
 
-    if (!validator.validateItems(regular_parsed) ||
-        !validator.validateItems(gachi_parsed) ||
-        !validator.validateItems(league_parsed)) {
+    const regular = stages.regular;
+    const gachi= stages.gachi;
+    const league = stages.league;
+
+    if (!validator.validateItems(regular) ||
+        !validator.validateItems(gachi) ||
+        !validator.validateItems(league)) {
           throw new ArgumentException("fetched json is invalid");
     }
 
@@ -59,7 +70,7 @@ cron.schedule('1 1-23/2 * * * *', () => {
 
     let latest_date_t = 0;
 
-    regular_parsed.forEach((item) => {
+    regular.forEach((item) => {
       //item.start_t is a mSec for Date obj
       if (latest_date_t < item.start_t) {
         latest_date_t = item.start_t;
@@ -93,9 +104,9 @@ cron.schedule('1 1-23/2 * * * *', () => {
         //The simplest way is to remove all stage info from DB
         ref.remove();
         try {
-          pushAllItems(regular_parsed, "regular");
-          pushAllItems(gachi_parsed, "gachi");
-          pushAllItems(league_parsed, "league");
+          pushAllItems(regular, "regular");
+          pushAllItems(gachi, "gachi");
+          pushAllItems(league, "league");
         }
         catch (err) {
           console.error(err);
