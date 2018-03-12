@@ -7,12 +7,11 @@ const assert = chai.assert;
 const fs = require('fs');
 const target = require('../validateItems');
 
-
 describe('validateItems', ()=> {
   describe('validateItems', () => {
     it('should return false when the input argment is invalid', () => {
       //forEach method is only available for Array Object.
-      let test_json = JSON.parse(fs.readFileSync("result_unofficial.json", "utf-8"));
+      let test_json = JSON.parse(fs.readFileSync("result_invalid.json", "utf-8"));
       let result = test_json.result;
 
       let regular = result.regular;

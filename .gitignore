@@ -3,3 +3,4 @@
 ikaassistant-auth-key.json
 result.json
 .db.js
+.test.js
