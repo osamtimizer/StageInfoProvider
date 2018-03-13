@@ -76,7 +76,6 @@ cron.schedule('1 1-23/2 * * * *', () => {
         latest_date_t = item.start_t;
       }
     });
-    console.log(latest_date_t);
 
     const regular_ref = ref.child("regular/stage");
 
@@ -108,6 +107,7 @@ cron.schedule('1 1-23/2 * * * *', () => {
           pushAllItems(regular, "regular");
           pushAllItems(gachi, "gachi");
           pushAllItems(league, "league");
+          console.log("update finished");
         }
         catch (err) {
           console.error(err);
